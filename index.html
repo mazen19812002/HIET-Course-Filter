@@ -141,7 +141,7 @@
             <!-- Action Buttons -->
             <div class="flex flex-wrap justify-center gap-4">
                 <!-- Show Report (Green) -->
-                <button onclick="generateReport()" id="btnShow" disabled class="bg-gray-400 cursor-not-allowed text-white text-xl font-bold py-3 px-8 rounded-full shadow-lg transform transition flex items-center">
+                <button onclick="generateReport()" id="btnShow" disabled class="bg-gray-400 cursor-not-allowed text-white text-xl font-bold py-3 px-6 rounded-full shadow-lg transform transition flex items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
@@ -149,23 +149,31 @@
                 </button>
                 
                 <!-- Export Excel (Blue) -->
-                <button onclick="exportToExcel()" id="btnExport" disabled class="bg-gray-400 cursor-not-allowed text-white text-xl font-bold py-3 px-8 rounded-full shadow-lg transform transition flex items-center">
+                <button onclick="exportToExcel()" id="btnExport" disabled class="bg-blue-600 cursor-not-allowed hover:bg-blue-700 disabled:bg-gray-400 text-white text-xl font-bold py-3 px-6 rounded-full shadow-lg transform transition flex items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                     </svg>
-                    تصدير إلى Excel
+                    تصدير Excel
                 </button>
 
-                <!-- Download Source -->
-                <a href="./00.xlsx" download="00.xlsx" class="bg-teal-500 hover:bg-teal-600 text-white text-lg font-bold py-3 px-8 rounded-full shadow-lg transform transition hover:scale-105 flex items-center decoration-0">
+                <!-- Copy Table (Purple) - NEW -->
+                <button onclick="copyTable()" id="btnCopy" disabled class="bg-purple-600 cursor-not-allowed hover:bg-purple-700 disabled:bg-gray-400 text-white text-xl font-bold py-3 px-6 rounded-full shadow-lg transform transition flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                    </svg>
+                    نسخ الجدول
+                </button>
+
+                <!-- Download Source (Teal) -->
+                <a href="./00.xlsx" download="00.xlsx" class="bg-teal-500 hover:bg-teal-600 text-white text-lg font-bold py-3 px-6 rounded-full shadow-lg transform transition hover:scale-105 flex items-center decoration-0">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
-                    تحميل الملف الأصلي
+                    تحميل الأصل
                 </a>
 
                 <!-- Reset (Red) -->
-                <button onclick="resetApp()" class="bg-red-500 hover:bg-red-600 text-white text-xl font-bold py-3 px-8 rounded-full shadow-lg transform transition hover:scale-105 flex items-center">
+                <button onclick="resetApp()" class="bg-red-500 hover:bg-red-600 text-white text-xl font-bold py-3 px-6 rounded-full shadow-lg transform transition hover:scale-105 flex items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
@@ -266,16 +274,14 @@
                 statusDiv.innerHTML = `<span class="text-green-600 font-bold text-lg">√ تم تحميل قاعدة البيانات بنجاح</span>`;
                 
                 // Enable Buttons
-                const btnShow = document.getElementById('btnShow');
-                const btnExport = document.getElementById('btnExport');
-                
-                btnShow.disabled = false;
-                btnShow.classList.remove('bg-gray-400', 'cursor-not-allowed');
-                btnShow.classList.add('bg-green-600', 'hover:bg-green-700', 'hover:scale-105');
-                
-                btnExport.disabled = false;
-                btnExport.classList.remove('bg-gray-400', 'cursor-not-allowed');
-                btnExport.classList.add('bg-blue-600', 'hover:bg-blue-700', 'hover:scale-105');
+                const buttons = ['btnShow', 'btnExport', 'btnCopy'];
+                buttons.forEach(btnId => {
+                    const btn = document.getElementById(btnId);
+                    if(btn) {
+                        btn.disabled = false;
+                        btn.classList.remove('bg-gray-400', 'cursor-not-allowed', 'disabled:bg-gray-400');
+                    }
+                });
 
             } catch (error) {
                 console.error("Processing Error:", error);
@@ -329,20 +335,18 @@
             function normalizeYear(val) {
                 if (!val) return "";
                 let str = val.toString().trim();
-                // Replace slashes or multiple dashes with single dash
                 str = str.replace(/\s*[\/\\]\s*/g, '-');
                 str = str.replace(/\s*-\s*/g, '-');
-                // Check if it looks like a year range (4 digits - 4 digits)
                 if (/\d{4}-\d{4}/.test(str)) {
                     return str.match(/\d{4}-\d{4}/)[0];
                 }
-                return ""; // Not a valid year format, ignore
+                return ""; 
             }
 
             for (let C = nameColIndex + 1; C <= range.e.c; ++C) {
-                // Check 3 rows above nameRowIndex for a year string
                 let foundYearInColumn = "";
                 
+                // Check 3 rows above nameRowIndex
                 for (let rOffset = 0; rOffset <= 3; rOffset++) {
                     const potentialYearRow = nameRowIndex - rOffset;
                     if (potentialYearRow < range.s.r) continue;
@@ -353,7 +357,7 @@
                         const cleanYear = normalizeYear(cell.v);
                         if (cleanYear) {
                             foundYearInColumn = cleanYear;
-                            break; // Found a year in this column!
+                            break; 
                         }
                     }
                 }
@@ -367,7 +371,6 @@
                 const courseCell = sheet[courseAddress];
                 
                 if (courseCell && courseCell.v) {
-                    // Use the last seen currentYear
                     if (currentYear) {
                         colMap[C] = { 
                             year: currentYear, 
@@ -386,13 +389,11 @@
                 
                 if (!nameCell || !nameCell.v) continue; // Skip empty rows
 
-                // Clean Name
                 const memberName = nameCell.v.toString().trim();
                 if (memberName.length < 2) continue; 
 
                 const memberData = { name: memberName, years: {} };
 
-                // Check all columns for this member
                 for (let C = nameColIndex + 1; C <= range.e.c; ++C) {
                     if (!colMap[C]) continue;
 
@@ -402,18 +403,13 @@
                     let isAttended = false;
                     if (cell && cell.v) {
                         const val = cell.v.toString().trim();
-                        // Indicators: Checkmarks, "1", text, etc.
-                        if (val.length > 0) {
-                            isAttended = true;
-                        }
+                        if (val.length > 0) isAttended = true;
                     }
 
                     if (isAttended) {
                         const { year, course } = colMap[C];
                         if (year) {
-                            if (!memberData.years[year]) {
-                                memberData.years[year] = [];
-                            }
+                            if (!memberData.years[year]) memberData.years[year] = [];
                             memberData.years[year].push(course);
                         }
                     }
@@ -431,40 +427,34 @@
                 return;
             }
 
-            // 1. Get Values
             const categorySelect = document.getElementById('categorySelect');
             const yearSelect = document.getElementById('yearSelect');
             
             const selectedCategory = categorySelect.value;
             const selectedYear = yearSelect.value; 
             
-            // 2. Validation
             if (!selectedCategory || !selectedYear) {
                 alert("برجاء اختيار الفئة والعام الأكاديمي أولاً.");
                 return;
             }
 
-            // 3. UI Setup
             const resultsArea = document.getElementById('resultsArea');
             const tableBody = document.getElementById('tableBody');
             const reportTable = document.getElementById('reportTable');
             const noResults = document.getElementById('noResults');
             const resultHeader = document.getElementById('resultHeader');
             
-            // Clear previous results
             tableBody.innerHTML = '';
             resultsArea.classList.remove('hidden');
 
-            // Update Header text
             const categoryText = categorySelect.options[categorySelect.selectedIndex].text;
             resultHeader.innerText = `نتائج البحث: ${categoryText} - عام ${selectedYear}`;
 
-            // 4. Fetch Data from Parsed DB
             const categoryData = database[selectedCategory];
             
             if (!categoryData || categoryData.length === 0) {
                 noResults.classList.remove('hidden');
-                noResults.innerHTML = `<p class="text-red-500">لا توجد بيانات لهذه الفئة في الملف (تحقق من اسم الشيت في ملف Excel).</p>`;
+                noResults.innerHTML = `<p class="text-red-500">لا توجد بيانات لهذه الفئة في الملف.</p>`;
                 reportTable.classList.add('hidden');
                 resultsArea.scrollIntoView({ behavior: 'smooth' });
                 return;
@@ -472,7 +462,6 @@
 
             let hasRows = false;
 
-            // 5. Render Logic
             categoryData.forEach(member => {
                 const courses = member.years[selectedYear];
 
@@ -495,7 +484,6 @@
                 }
             });
 
-            // 6. Handle Empty State
             if (hasRows) {
                 reportTable.classList.remove('hidden');
                 noResults.classList.add('hidden');
@@ -505,7 +493,6 @@
                 noResults.innerHTML = `<p class="text-xl text-gray-500">لا توجد سجلات تدريبية مسجلة لـ <b>${categoryText}</b> في عام <b>${selectedYear}</b>.</p>`;
             }
             
-            // Scroll to results
             resultsArea.scrollIntoView({ behavior: 'smooth' });
         }
 
@@ -517,7 +504,7 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // --- UPDATED EXPORT FUNCTION ---
+        // --- EXPORT TO EXCEL (SEPARATE COLUMNS) ---
         function exportToExcel() {
             const resultsArea = document.getElementById('resultsArea');
             const tableBody = document.getElementById('tableBody');
@@ -533,40 +520,37 @@
             const yearText = yearSelect.value;
             const selectedCategory = categorySelect.value;
 
-            // 1. Fetch Data Directly (Don't just parse HTML table)
             const categoryData = database[selectedCategory];
             if (!categoryData) return;
 
-            // 2. Build rows array for SheetJS
-            // Format: [ ["Name", "Course 1", "Course 2", ...], [Member, C1, C2, ...] ]
+            // Prepare Data: Separating courses into distinct columns
             const exportRows = [];
-            let maxCourses = 0;
             const dataRows = [];
+            let maxCourses = 0;
 
             categoryData.forEach(member => {
                 const courses = member.years[yearText];
                 if (courses && courses.length > 0) {
                     if (courses.length > maxCourses) maxCourses = courses.length;
-                    // Add Row: [Name, ...courses]
+                    // Spread course array elements into separate cells
                     dataRows.push([member.name, ...courses]);
                 }
             });
 
-            // 3. Create Dynamic Headers
+            // Create Dynamic Headers based on max number of courses found
             const headers = ["الاسم"];
             for (let i = 1; i <= maxCourses; i++) {
                 headers.push(`دورة ${i}`);
             }
             exportRows.push(headers);
             
-            // Add Data
+            // Append the actual data rows
             exportRows.push(...dataRows);
 
-            // 4. Create Workbook
             const ws = XLSX.utils.aoa_to_sheet(exportRows);
             const wb = XLSX.utils.book_new();
             
-            // Right-to-Left Sheet direction
+            // RTL
             if(!ws['!views']) ws['!views'] = [];
             ws['!views'].push({ rightToLeft: true });
 
@@ -574,6 +558,35 @@
             
             const filename = `Training_Report_${categoryText}_${yearText}.xlsx`;
             XLSX.writeFile(wb, filename);
+        }
+
+        // --- NEW: COPY TABLE FUNCTION ---
+        function copyTable() {
+            const table = document.getElementById('reportTable');
+            const resultsArea = document.getElementById('resultsArea');
+
+            if (!table || resultsArea.classList.contains('hidden')) {
+                alert("لا يوجد جدول لنسخه. برجاء عرض التقرير أولاً.");
+                return;
+            }
+
+            // Select the table content
+            const range = document.createRange();
+            range.selectNode(table);
+            window.getSelection().removeAllRanges();
+            window.getSelection().addRange(range);
+
+            try {
+                // Execute copy command
+                document.execCommand('copy');
+                alert("تم نسخ الجدول إلى الحافظة بنجاح! يمكنك الآن لصقه في Excel أو Word.");
+            } catch (err) {
+                console.error("Copy failed", err);
+                alert("فشل النسخ. المتصفح قد لا يدعم هذه الخاصية.");
+            }
+
+            // Clear selection
+            window.getSelection().removeAllRanges();
         }
 
     </script>
