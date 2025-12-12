@@ -140,8 +140,8 @@
 
             <!-- Action Buttons -->
             <div class="flex flex-wrap justify-center gap-4">
-                <!-- Show Report (Green) -->
-                <button onclick="generateReport()" id="btnShow" disabled class="bg-gray-400 cursor-not-allowed text-white text-xl font-bold py-3 px-6 rounded-full shadow-lg transform transition flex items-center">
+                <!-- Show Report (Modified to Blue) -->
+                <button onclick="generateReport()" id="btnShow" disabled class="bg-blue-600 cursor-not-allowed hover:bg-blue-700 disabled:bg-gray-400 text-white text-xl font-bold py-3 px-6 rounded-full shadow-lg transform transition flex items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
@@ -156,21 +156,13 @@
                     تصدير Excel
                 </button>
 
-                <!-- Copy Table (Purple) - NEW -->
+                <!-- Copy Table (Purple) -->
                 <button onclick="copyTable()" id="btnCopy" disabled class="bg-purple-600 cursor-not-allowed hover:bg-purple-700 disabled:bg-gray-400 text-white text-xl font-bold py-3 px-6 rounded-full shadow-lg transform transition flex items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
                     </svg>
                     نسخ الجدول
                 </button>
-
-                <!-- Download Source (Teal) -->
-                <a href="./00.xlsx" download="00.xlsx" class="bg-teal-500 hover:bg-teal-600 text-white text-lg font-bold py-3 px-6 rounded-full shadow-lg transform transition hover:scale-105 flex items-center decoration-0">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    تحميل الأصل
-                </a>
 
                 <!-- Reset (Red) -->
                 <button onclick="resetApp()" class="bg-red-500 hover:bg-red-600 text-white text-xl font-bold py-3 px-6 rounded-full shadow-lg transform transition hover:scale-105 flex items-center">
@@ -279,7 +271,13 @@
                     const btn = document.getElementById(btnId);
                     if(btn) {
                         btn.disabled = false;
+                        // Remove gray/disabled classes, Add color classes based on button type is handled in HTML class list mostly, 
+                        // but we need to remove the disabled overrides.
                         btn.classList.remove('bg-gray-400', 'cursor-not-allowed', 'disabled:bg-gray-400');
+                        
+                        // Re-add specific colors if they were removed (simple safeguard)
+                        if(btnId === 'btnShow' || btnId === 'btnExport') btn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+                        if(btnId === 'btnCopy') btn.classList.add('bg-purple-600', 'hover:bg-purple-700');
                     }
                 });
 
@@ -560,33 +558,106 @@
             XLSX.writeFile(wb, filename);
         }
 
-        // --- NEW: COPY TABLE FUNCTION ---
+        // --- COPY TABLE FUNCTION (SPLIT COLUMNS) ---
         function copyTable() {
-            const table = document.getElementById('reportTable');
             const resultsArea = document.getElementById('resultsArea');
-
-            if (!table || resultsArea.classList.contains('hidden')) {
-                alert("لا يوجد جدول لنسخه. برجاء عرض التقرير أولاً.");
+            
+            if (resultsArea.classList.contains('hidden')) {
+                alert("لا توجد بيانات معروضة لنسخها. برجاء عرض التقرير أولاً.");
                 return;
             }
 
-            // Select the table content
+            const categorySelect = document.getElementById('categorySelect');
+            const yearSelect = document.getElementById('yearSelect');
+            const selectedCategory = categorySelect.value;
+            const yearText = yearSelect.value;
+
+            const categoryData = database[selectedCategory];
+            if (!categoryData) return;
+
+            // 1. Calculate Max Columns
+            let maxCourses = 0;
+            const rowsToCopy = [];
+
+            categoryData.forEach(member => {
+                const courses = member.years[yearText];
+                if (courses && courses.length > 0) {
+                    if (courses.length > maxCourses) maxCourses = courses.length;
+                    rowsToCopy.push({name: member.name, courses: courses});
+                }
+            });
+
+            if (rowsToCopy.length === 0) {
+                alert("الجدول فارغ");
+                return;
+            }
+
+            // 2. Create Temporary Hidden Table
+            const tempTable = document.createElement('table');
+            tempTable.style.position = 'fixed';
+            tempTable.style.left = '-9999px';
+            tempTable.style.border = '1px solid black'; // Helps some copiers preserve grid
+            
+            // 2a. Header Row
+            const thead = document.createElement('thead');
+            const trHead = document.createElement('tr');
+            
+            const thName = document.createElement('th');
+            thName.innerText = "الاسم";
+            trHead.appendChild(thName);
+
+            for (let i = 1; i <= maxCourses; i++) {
+                const th = document.createElement('th');
+                th.innerText = `دورة ${i}`;
+                trHead.appendChild(th);
+            }
+            thead.appendChild(trHead);
+            tempTable.appendChild(thead);
+
+            // 2b. Body Rows
+            const tbody = document.createElement('tbody');
+            rowsToCopy.forEach(row => {
+                const tr = document.createElement('tr');
+                
+                // Name Cell
+                const tdName = document.createElement('td');
+                tdName.innerText = row.name;
+                tr.appendChild(tdName);
+
+                // Course Cells
+                for (let i = 0; i < maxCourses; i++) {
+                    const td = document.createElement('td');
+                    // If course exists at index i, put it. Else empty.
+                    if (i < row.courses.length) {
+                        td.innerText = row.courses[i];
+                    } else {
+                        td.innerText = "";
+                    }
+                    tr.appendChild(td);
+                }
+                tbody.appendChild(tr);
+            });
+            tempTable.appendChild(tbody);
+
+            document.body.appendChild(tempTable);
+
+            // 3. Select and Copy
             const range = document.createRange();
-            range.selectNode(table);
+            range.selectNode(tempTable);
             window.getSelection().removeAllRanges();
             window.getSelection().addRange(range);
 
             try {
-                // Execute copy command
                 document.execCommand('copy');
-                alert("تم نسخ الجدول إلى الحافظة بنجاح! يمكنك الآن لصقه في Excel أو Word.");
+                alert("تم نسخ الجدول (بتنسيق أعمدة منفصلة) إلى الحافظة بنجاح!");
             } catch (err) {
                 console.error("Copy failed", err);
-                alert("فشل النسخ. المتصفح قد لا يدعم هذه الخاصية.");
+                alert("فشل النسخ.");
             }
 
-            // Clear selection
+            // 4. Clean up
             window.getSelection().removeAllRanges();
+            document.body.removeChild(tempTable);
         }
 
     </script>
