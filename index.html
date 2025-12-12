@@ -6,7 +6,7 @@
     <title>تقرير التدريب - Training Report</title>
     
     <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -29,7 +29,7 @@
         }
 
         .title-thin {
-            font-weight: 400; /* Thin title as requested */
+            font-weight: 300; /* Thin title as requested */
         }
 
         /* Custom Scrollbar */
@@ -71,26 +71,26 @@
     <main class="flex-grow container mx-auto px-4 py-8">
         
         <!-- Header Section -->
-        <header class="text-center mb-10">
+        <header class="text-center mb-8">
             <h1 class="text-4xl md:text-5xl text-teal-800 title-thin mb-2">نظام متابعة الدورات التدريبية</h1>
-            <p class="text-lg text-teal-600">وحدة التدريب وتنمية المهارات</p>
+            <p class="text-lg text-teal-600 font-light">وحدة التدريب وتنمية المهارات</p>
             
             <!-- Data Status Indicator -->
             <div id="dataStatus" class="mt-4 text-sm font-bold text-gray-500">
                 <div class="loader mr-2"></div>
-                جاري تحميل قاعدة البيانات...
+                جاري تحميل ملف البيانات (00.xlsx)...
             </div>
         </header>
 
         <!-- Controls Section -->
-        <div class="glass-panel p-8 max-w-5xl mx-auto mb-10">
+        <div class="glass-panel p-6 md:p-8 max-w-5xl mx-auto mb-8">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 
                 <!-- Category Select -->
                 <div class="flex flex-col">
                     <label for="categorySelect" class="text-teal-900 font-bold mb-2 text-lg">اختر الفئة:</label>
                     <div class="relative">
-                        <select id="categorySelect" class="w-full p-4 border-2 border-teal-100 rounded-xl text-lg focus:outline-none focus:border-teal-500 bg-white appearance-none cursor-pointer text-gray-700 shadow-sm transition-all hover:border-teal-300">
+                        <select id="categorySelect" class="w-full p-3 border-2 border-teal-100 rounded-xl text-lg focus:outline-none focus:border-teal-500 bg-white appearance-none cursor-pointer text-gray-700 shadow-sm transition-all hover:border-teal-300">
                             <option value="" disabled selected>-- حدد الفئة --</option>
                             <option value="هيئة تدريس">هيئة تدريس</option>
                             <option value="هيئة معاونة">هيئة معاونة</option>
@@ -106,7 +106,7 @@
                 <div class="flex flex-col">
                     <label for="yearSelect" class="text-teal-900 font-bold mb-2 text-lg">اختر العام الأكاديمي:</label>
                     <div class="relative">
-                        <select id="yearSelect" class="w-full p-4 border-2 border-teal-100 rounded-xl text-lg focus:outline-none focus:border-teal-500 bg-white appearance-none cursor-pointer text-gray-700 shadow-sm transition-all hover:border-teal-300">
+                        <select id="yearSelect" class="w-full p-3 border-2 border-teal-100 rounded-xl text-lg focus:outline-none focus:border-teal-500 bg-white appearance-none cursor-pointer text-gray-700 shadow-sm transition-all hover:border-teal-300">
                             <option value="" disabled selected>-- حدد العام --</option>
                             <option value="2022-2023">2022-2023</option>
                             <option value="2023-2024">2023-2024</option>
@@ -160,12 +160,12 @@
         <div id="resultsArea" class="hidden">
             <h2 class="text-2xl font-bold text-teal-800 mb-4 border-r-4 border-teal-500 pr-3" id="resultHeader">نتائج البحث</h2>
             
-            <div class="overflow-x-auto rounded-xl shadow-lg">
+            <div class="overflow-x-auto rounded-xl shadow-lg bg-white">
                 <table id="reportTable" class="min-w-full bg-white">
                     <thead class="bg-teal-700 text-white">
                         <tr>
-                            <th class="py-4 px-6 text-right text-lg font-semibold w-1/4">الاسم</th>
-                            <th class="py-4 px-6 text-right text-lg font-semibold w-3/4">الدورات التدريبية التي تم حضورها</th>
+                            <th class="py-4 px-6 text-right text-lg font-semibold w-1/4 whitespace-nowrap">الاسم</th>
+                            <th class="py-4 px-6 text-right text-lg font-semibold w-3/4">الدورات التدريبية</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody" class="divide-y divide-gray-200">
@@ -205,7 +205,7 @@
                 const arrayBuffer = await response.arrayBuffer();
                 const workbook = XLSX.read(arrayBuffer, { type: 'array' });
                 
-                // Parse Sheets
+                // Parse Sheets with improved logic
                 database['هيئة تدريس'] = processSheet(workbook.Sheets['هيئة تدريس']);
                 database['هيئة معاونة'] = processSheet(workbook.Sheets['هيئة معاونة']);
                 database['جهاز اداري'] = processSheet(workbook.Sheets['جهاز اداري']);
@@ -213,7 +213,7 @@
                 // Update UI
                 isDataLoaded = true;
                 const statusDiv = document.getElementById('dataStatus');
-                statusDiv.innerHTML = `<span class="text-green-600">√ تم تحميل قاعدة البيانات بنجاح</span>`;
+                statusDiv.innerHTML = `<span class="text-green-600 font-bold text-lg">√ تم تحميل قاعدة البيانات بنجاح</span>`;
                 
                 // Enable Buttons
                 const btnShow = document.getElementById('btnShow');
@@ -230,91 +230,128 @@
             } catch (error) {
                 console.error(error);
                 const statusDiv = document.getElementById('dataStatus');
-                statusDiv.innerHTML = `<span class="text-red-600">خطأ: تأكد من وجود ملف "00.xlsx" في نفس المجلد. (${error.message})</span>`;
+                statusDiv.innerHTML = `<span class="text-red-600 bg-red-100 p-2 rounded">خطأ: تأكد من وجود ملف "00.xlsx" في نفس المجلد. (${error.message})</span>`;
             }
         };
 
-        // --- EXCEL PARSING LOGIC ---
+        // --- EXCEL PARSING LOGIC (ROBUST VERSION) ---
         function processSheet(sheet) {
             if (!sheet) return [];
 
             const range = XLSX.utils.decode_range(sheet['!ref']);
             const data = [];
             
-            // 1. Find the "Names" Row (Header 2)
-            // We search first 10 rows in Column A (index 0) for "الاسم"
+            // 1. Find the "Names" Cell (The anchor point)
             let nameRowIndex = -1;
-            for (let R = range.s.r; R <= Math.min(range.e.r, 10); ++R) {
-                const cellAddress = XLSX.utils.encode_cell({r: R, c: range.s.c});
-                const cell = sheet[cellAddress];
-                if (cell && cell.v && cell.v.toString().includes('الاسم')) {
-                    nameRowIndex = R;
-                    break;
+            let nameColIndex = -1;
+            
+            // Search first 20 rows and 5 columns for "الاسم"
+            for (let R = range.s.r; R <= Math.min(range.e.r, 20); ++R) {
+                for (let C = range.s.c; C <= Math.min(range.e.c, 5); ++C) {
+                    const cellAddress = XLSX.utils.encode_cell({r: R, c: C});
+                    const cell = sheet[cellAddress];
+                    if (cell && cell.v && cell.v.toString().trim().includes('الاسم')) {
+                        nameRowIndex = R;
+                        nameColIndex = C;
+                        break;
+                    }
                 }
+                if (nameRowIndex !== -1) break;
             }
 
-            if (nameRowIndex === -1) return []; // Structure unknown
+            if (nameRowIndex === -1) return []; // Cannot parse this sheet
 
-            const yearRowIndex = nameRowIndex - 1; // Row above names has years
-            const courseRowIndex = nameRowIndex;   // Same row as "Names" has course titles
+            // 2. Determine Header Rows (Year & Course)
+            // Typically Year is above Name.
+            // Typically Course is Name row OR the row below it.
             
-            // 2. Map Columns to Years & Courses
-            const colMap = {}; // index -> {year, course}
+            const yearRowIndex = nameRowIndex - 1; // Assuming years are strictly above "Name"
+            
+            // Heuristic to find Course Row:
+            // Check cell to the right of "Name". If it has text, Course Names are on this row.
+            // If it's empty, check the row below.
+            let courseRowIndex = nameRowIndex;
+            
+            const immediateRightCell = sheet[XLSX.utils.encode_cell({r: nameRowIndex, c: nameColIndex + 1})];
+            const belowRightCell = sheet[XLSX.utils.encode_cell({r: nameRowIndex + 1, c: nameColIndex + 1})];
+            
+            if ((!immediateRightCell || !immediateRightCell.v) && (belowRightCell && belowRightCell.v)) {
+                courseRowIndex = nameRowIndex + 1;
+            }
+
+            // 3. Map Columns to {Year, Course}
+            const colMap = {}; 
             let currentYear = "";
 
-            // Start from column B (index 1) assuming A is Names
-            for (let C = range.s.c + 1; C <= range.e.c; ++C) {
-                // Check Year (Handles Merged Cells logic simply by carrying over previous value if empty)
-                const yearAddress = XLSX.utils.encode_cell({r: yearRowIndex, c: C});
-                const yearCell = sheet[yearAddress];
-                if (yearCell && yearCell.v) {
-                    currentYear = yearCell.v.toString().trim();
+            for (let C = nameColIndex + 1; C <= range.e.c; ++C) {
+                // Read Year (Fill forward for merged cells)
+                if (yearRowIndex >= range.s.r) {
+                    const yearAddress = XLSX.utils.encode_cell({r: yearRowIndex, c: C});
+                    const yearCell = sheet[yearAddress];
+                    if (yearCell && yearCell.v) {
+                        currentYear = yearCell.v.toString().trim();
+                    }
                 }
                 
-                // Check Course Name
+                // Read Course Name
                 const courseAddress = XLSX.utils.encode_cell({r: courseRowIndex, c: C});
                 const courseCell = sheet[courseAddress];
                 
                 if (courseCell && courseCell.v) {
                     colMap[C] = { 
-                        year: currentYear, 
-                        course: courseCell.v.toString().trim() 
+                        year: currentYear, // Associates this column with the last seen year
+                        course: courseCell.v.toString().trim()
                     };
                 }
             }
 
-            // 3. Extract Member Data
-            for (let R = nameRowIndex + 1; R <= range.e.r; ++R) {
-                const nameAddress = XLSX.utils.encode_cell({r: R, c: range.s.c});
+            // 4. Extract Member Data
+            // Start reading data from the row after headers
+            const startDataRow = courseRowIndex + 1;
+            
+            for (let R = startDataRow; R <= range.e.r; ++R) {
+                const nameAddress = XLSX.utils.encode_cell({r: R, c: nameColIndex});
                 const nameCell = sheet[nameAddress];
                 
                 if (!nameCell || !nameCell.v) continue; // Skip empty rows
 
+                // Clean Name
                 const memberName = nameCell.v.toString().trim();
+                // Basic filter to ignore footer text or noise
+                if (memberName.length < 2) continue; 
+
                 const memberData = { name: memberName, years: {} };
+                let hasAttendance = false;
 
                 // Check all columns for this member
-                for (let C = range.s.c + 1; C <= range.e.c; ++C) {
+                for (let C = nameColIndex + 1; C <= range.e.c; ++C) {
+                    // Only check columns that mapped to a course/year
                     if (!colMap[C]) continue;
 
                     const cellAddress = XLSX.utils.encode_cell({r: R, c: C});
                     const cell = sheet[cellAddress];
                     
-                    // Logic: If cell has content (Checkmark or Text), they attended
-                    const isAttended = cell && cell.v && (
-                        cell.v === '√' || 
-                        cell.v === true || 
-                        cell.v.toString().trim().length > 0
-                    );
+                    // Logic: If cell has content (Checkmark or any text), they attended
+                    let isAttended = false;
+                    if (cell && cell.v) {
+                        const val = cell.v.toString().trim();
+                        // Common indicators: √, X, 1, or just non-empty string
+                        if (val.length > 0) {
+                            isAttended = true;
+                        }
+                    }
 
                     if (isAttended) {
                         const { year, course } = colMap[C];
-                        if (!year) continue;
-
-                        if (!memberData.years[year]) {
-                            memberData.years[year] = [];
+                        
+                        // Ensure we have a valid year
+                        if (year) {
+                            if (!memberData.years[year]) {
+                                memberData.years[year] = [];
+                            }
+                            memberData.years[year].push(course);
+                            hasAttendance = true;
                         }
-                        memberData.years[year].push(course);
                     }
                 }
                 data.push(memberData);
@@ -335,7 +372,7 @@
             const yearSelect = document.getElementById('yearSelect');
             
             const selectedCategory = categorySelect.value;
-            const selectedYear = yearSelect.value;
+            const selectedYear = yearSelect.value; // e.g., "2023-2024"
             
             // 2. Validation
             if (!selectedCategory || !selectedYear) {
@@ -361,10 +398,11 @@
             // 4. Fetch Data from Parsed DB
             const categoryData = database[selectedCategory];
             
-            if (!categoryData) {
+            if (!categoryData || categoryData.length === 0) {
                 noResults.classList.remove('hidden');
                 noResults.innerHTML = `<p class="text-red-500">لا توجد بيانات لهذه الفئة في الملف (تحقق من اسم الشيت في ملف Excel).</p>`;
                 reportTable.classList.add('hidden');
+                resultsArea.scrollIntoView({ behavior: 'smooth' });
                 return;
             }
 
@@ -372,10 +410,8 @@
 
             // 5. Render Logic
             categoryData.forEach(member => {
-                // Fuzzy match for year (e.g., excel has "2022-2023" vs dropdown "2022-2023")
-                // We access exactly what matches string-wise.
-                // If excel headers are "2022 / 2023", exact match might fail. 
-                // We'll assume strict format from prompt, but log keys for debugging.
+                // Access courses for the specific selected year
+                // Note: We use exact string matching. "2023-2024" in dropdown must match Excel header "2023-2024"
                 const courses = member.years[selectedYear];
 
                 if (courses && courses.length > 0) {
@@ -384,13 +420,14 @@
                     const tr = document.createElement('tr');
                     tr.className = "hover:bg-teal-50 transition-colors duration-200";
 
+                    // Create beautiful tags for courses
                     const coursesHtml = courses.map(course => 
                         `<span class="inline-block bg-teal-100 text-teal-800 text-sm px-3 py-1 rounded-full m-1 shadow-sm border border-teal-200 font-semibold">${course}</span>`
                     ).join('');
 
                     tr.innerHTML = `
-                        <td class="py-4 px-6 border-b border-gray-200 text-gray-800 font-bold text-lg">${member.name}</td>
-                        <td class="py-4 px-6 border-b border-gray-200 text-gray-600">${coursesHtml}</td>
+                        <td class="py-4 px-6 border-b border-gray-200 text-gray-800 font-bold text-lg whitespace-nowrap">${member.name}</td>
+                        <td class="py-4 px-6 border-b border-gray-200 text-gray-600 leading-relaxed">${coursesHtml}</td>
                     `;
                     
                     tableBody.appendChild(tr);
@@ -436,6 +473,7 @@
             const filename = `Training_Report_${categoryText}_${yearText}.xlsx`;
 
             const table = document.getElementById('reportTable');
+            // 'sheet: "Sheet1"' puts the data in the main sheet
             const wb = XLSX.utils.table_to_book(table, {sheet: "Sheet1"});
             XLSX.writeFile(wb, filename);
         }
