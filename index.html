@@ -73,17 +73,30 @@
         <!-- Header Section -->
         <header class="text-center mb-8">
             <h1 class="text-4xl md:text-5xl text-teal-800 title-thin mb-2">نظام متابعة الدورات التدريبية</h1>
-            <p class="text-lg text-teal-600 font-light">وحدة التدريب وتنمية المهارات</p>
+            <p class="text-lg text-teal-600 font-light">وحدة الجودة</p>
             
             <!-- Data Status Indicator -->
             <div id="dataStatus" class="mt-4 text-sm font-bold text-gray-500">
                 <div class="loader mr-2"></div>
-                جاري تحميل ملف البيانات (00.xlsx)...
+                جاري البحث عن ملف البيانات (00.xlsx)...
             </div>
         </header>
 
         <!-- Controls Section -->
         <div class="glass-panel p-6 md:p-8 max-w-5xl mx-auto mb-8">
+            
+            <!-- File Upload Section (New) -->
+            <div class="mb-8 border-b border-gray-200 pb-6 flex flex-col items-center justify-center">
+                 <input type="file" id="uploadExcel" accept=".xlsx, .xls" class="hidden" />
+                 <button onclick="document.getElementById('uploadExcel').click()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-lg font-bold py-2 px-6 rounded-full shadow-md transform transition hover:scale-105 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                    رفع ملف Excel يدويًا
+                </button>
+                <p class="text-xs text-gray-500 mt-2">استخدم هذا الزر إذا لم يتم تحميل الملف تلقائياً</p>
+            </div>
+
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 
                 <!-- Category Select -->
@@ -195,23 +208,54 @@
         let database = {};
         let isDataLoaded = false;
 
-        // On Window Load -> Fetch Excel
+        // --- 1. Automatic Load on Window Start ---
         window.onload = async function() {
             try {
                 const response = await fetch('./00.xlsx');
                 if (!response.ok) {
-                    throw new Error("لم يتم العثور على الملف 00.xlsx");
+                    throw new Error("لم يتم العثور على الملف 00.xlsx تلقائيًا");
                 }
                 const arrayBuffer = await response.arrayBuffer();
                 const workbook = XLSX.read(arrayBuffer, { type: 'array' });
                 
-                // Parse Sheets with improved logic
+                processWorkbook(workbook);
+
+            } catch (error) {
+                console.warn("Auto-load failed:", error);
+                const statusDiv = document.getElementById('dataStatus');
+                statusDiv.innerHTML = `<span class="text-orange-600 bg-orange-100 p-2 rounded block">تنبيه: لم يتم تحميل الملف تلقائيًا. برجاء استخدام زر "رفع ملف Excel يدويًا".</span>`;
+            }
+        };
+
+        // --- 2. Manual Upload Handler ---
+        document.getElementById('uploadExcel').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    processWorkbook(workbook);
+                } catch (error) {
+                    alert("خطأ في قراءة الملف. تأكد من أنه ملف Excel صالح.");
+                    console.error(error);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        });
+
+        // --- 3. Core Processing Logic ---
+        function processWorkbook(workbook) {
+            try {
                 database['هيئة تدريس'] = processSheet(workbook.Sheets['هيئة تدريس']);
                 database['هيئة معاونة'] = processSheet(workbook.Sheets['هيئة معاونة']);
                 database['جهاز اداري'] = processSheet(workbook.Sheets['جهاز اداري']);
 
-                // Update UI
                 isDataLoaded = true;
+                
+                // Update UI Status
                 const statusDiv = document.getElementById('dataStatus');
                 statusDiv.innerHTML = `<span class="text-green-600 font-bold text-lg">√ تم تحميل قاعدة البيانات بنجاح</span>`;
                 
@@ -228,11 +272,10 @@
                 btnExport.classList.add('bg-blue-600', 'hover:bg-blue-700', 'hover:scale-105');
 
             } catch (error) {
-                console.error(error);
-                const statusDiv = document.getElementById('dataStatus');
-                statusDiv.innerHTML = `<span class="text-red-600 bg-red-100 p-2 rounded">خطأ: تأكد من وجود ملف "00.xlsx" في نفس المجلد. (${error.message})</span>`;
+                console.error("Processing Error:", error);
+                alert("حدث خطأ أثناء معالجة الملف. تأكد من أن أسماء الشيتات صحيحة (هيئة تدريس، هيئة معاونة، جهاز اداري).");
             }
-        };
+        }
 
         // --- EXCEL PARSING LOGIC (ROBUST VERSION) ---
         function processSheet(sheet) {
@@ -262,16 +305,10 @@
             if (nameRowIndex === -1) return []; // Cannot parse this sheet
 
             // 2. Determine Header Rows (Year & Course)
-            // Typically Year is above Name.
-            // Typically Course is Name row OR the row below it.
-            
             const yearRowIndex = nameRowIndex - 1; // Assuming years are strictly above "Name"
             
             // Heuristic to find Course Row:
-            // Check cell to the right of "Name". If it has text, Course Names are on this row.
-            // If it's empty, check the row below.
             let courseRowIndex = nameRowIndex;
-            
             const immediateRightCell = sheet[XLSX.utils.encode_cell({r: nameRowIndex, c: nameColIndex + 1})];
             const belowRightCell = sheet[XLSX.utils.encode_cell({r: nameRowIndex + 1, c: nameColIndex + 1})];
             
@@ -299,14 +336,13 @@
                 
                 if (courseCell && courseCell.v) {
                     colMap[C] = { 
-                        year: currentYear, // Associates this column with the last seen year
+                        year: currentYear, 
                         course: courseCell.v.toString().trim()
                     };
                 }
             }
 
             // 4. Extract Member Data
-            // Start reading data from the row after headers
             const startDataRow = courseRowIndex + 1;
             
             for (let R = startDataRow; R <= range.e.r; ++R) {
@@ -317,25 +353,20 @@
 
                 // Clean Name
                 const memberName = nameCell.v.toString().trim();
-                // Basic filter to ignore footer text or noise
                 if (memberName.length < 2) continue; 
 
                 const memberData = { name: memberName, years: {} };
-                let hasAttendance = false;
 
                 // Check all columns for this member
                 for (let C = nameColIndex + 1; C <= range.e.c; ++C) {
-                    // Only check columns that mapped to a course/year
                     if (!colMap[C]) continue;
 
                     const cellAddress = XLSX.utils.encode_cell({r: R, c: C});
                     const cell = sheet[cellAddress];
                     
-                    // Logic: If cell has content (Checkmark or any text), they attended
                     let isAttended = false;
                     if (cell && cell.v) {
                         const val = cell.v.toString().trim();
-                        // Common indicators: √, X, 1, or just non-empty string
                         if (val.length > 0) {
                             isAttended = true;
                         }
@@ -343,14 +374,11 @@
 
                     if (isAttended) {
                         const { year, course } = colMap[C];
-                        
-                        // Ensure we have a valid year
                         if (year) {
                             if (!memberData.years[year]) {
                                 memberData.years[year] = [];
                             }
                             memberData.years[year].push(course);
-                            hasAttendance = true;
                         }
                     }
                 }
@@ -363,7 +391,7 @@
 
         function generateReport() {
             if (!isDataLoaded) {
-                alert("جاري تحميل البيانات، برجاء الانتظار...");
+                alert("جاري تحميل البيانات، برجاء الانتظار أو رفع الملف يدويًا...");
                 return;
             }
 
@@ -372,7 +400,7 @@
             const yearSelect = document.getElementById('yearSelect');
             
             const selectedCategory = categorySelect.value;
-            const selectedYear = yearSelect.value; // e.g., "2023-2024"
+            const selectedYear = yearSelect.value; 
             
             // 2. Validation
             if (!selectedCategory || !selectedYear) {
@@ -410,8 +438,6 @@
 
             // 5. Render Logic
             categoryData.forEach(member => {
-                // Access courses for the specific selected year
-                // Note: We use exact string matching. "2023-2024" in dropdown must match Excel header "2023-2024"
                 const courses = member.years[selectedYear];
 
                 if (courses && courses.length > 0) {
@@ -420,7 +446,6 @@
                     const tr = document.createElement('tr');
                     tr.className = "hover:bg-teal-50 transition-colors duration-200";
 
-                    // Create beautiful tags for courses
                     const coursesHtml = courses.map(course => 
                         `<span class="inline-block bg-teal-100 text-teal-800 text-sm px-3 py-1 rounded-full m-1 shadow-sm border border-teal-200 font-semibold">${course}</span>`
                     ).join('');
@@ -473,7 +498,6 @@
             const filename = `Training_Report_${categoryText}_${yearText}.xlsx`;
 
             const table = document.getElementById('reportTable');
-            // 'sheet: "Sheet1"' puts the data in the main sheet
             const wb = XLSX.utils.table_to_book(table, {sheet: "Sheet1"});
             XLSX.writeFile(wb, filename);
         }
