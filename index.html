@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تقرير التدريب - Training Report</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- SheetJS for Excel Processing -->
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: #E0F7FA; /* Light Blue Background */
+        }
+        
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+
+        .title-thin {
+            font-weight: 400; /* Thin title as requested */
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #00897B; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #004D40; 
+        }
+
+        /* Loading Spinner */
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #0d9488;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between">
+
+    <!-- Main Content Wrapper -->
+    <main class="flex-grow container mx-auto px-4 py-8">
+        
+        <!-- Header Section -->
+        <header class="text-center mb-10">
+            <h1 class="text-4xl md:text-5xl text-teal-800 title-thin mb-2">نظام متابعة الدورات التدريبية</h1>
+            <p class="text-lg text-teal-600">وحدة التدريب وتنمية المهارات</p>
+            
+            <!-- Data Status Indicator -->
+            <div id="dataStatus" class="mt-4 text-sm font-bold text-gray-500">
+                <div class="loader mr-2"></div>
+                جاري تحميل قاعدة البيانات...
+            </div>
+        </header>
+
+        <!-- Controls Section -->
+        <div class="glass-panel p-8 max-w-5xl mx-auto mb-10">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                
+                <!-- Category Select -->
+                <div class="flex flex-col">
+                    <label for="categorySelect" class="text-teal-900 font-bold mb-2 text-lg">اختر الفئة:</label>
+                    <div class="relative">
+                        <select id="categorySelect" class="w-full p-4 border-2 border-teal-100 rounded-xl text-lg focus:outline-none focus:border-teal-500 bg-white appearance-none cursor-pointer text-gray-700 shadow-sm transition-all hover:border-teal-300">
+                            <option value="" disabled selected>-- حدد الفئة --</option>
+                            <option value="هيئة تدريس">هيئة تدريس</option>
+                            <option value="هيئة معاونة">هيئة معاونة</option>
+                            <option value="جهاز اداري">جهاز اداري</option>
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center px-4 text-teal-600">
+                            <svg class="fill-current h-6 w-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Year Select -->
+                <div class="flex flex-col">
+                    <label for="yearSelect" class="text-teal-900 font-bold mb-2 text-lg">اختر العام الأكاديمي:</label>
+                    <div class="relative">
+                        <select id="yearSelect" class="w-full p-4 border-2 border-teal-100 rounded-xl text-lg focus:outline-none focus:border-teal-500 bg-white appearance-none cursor-pointer text-gray-700 shadow-sm transition-all hover:border-teal-300">
+                            <option value="" disabled selected>-- حدد العام --</option>
+                            <option value="2022-2023">2022-2023</option>
+                            <option value="2023-2024">2023-2024</option>
+                            <option value="2024-2025">2024-2025</option>
+                            <option value="2025-2026">2025-2026</option>
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center px-4 text-teal-600">
+                            <svg class="fill-current h-6 w-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-wrap justify-center gap-4">
+                <!-- Show Report (Green) -->
+                <button onclick="generateReport()" id="btnShow" disabled class="bg-gray-400 cursor-not-allowed text-white text-xl font-bold py-3 px-8 rounded-full shadow-lg transform transition flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    عرض التقرير
+                </button>
+                
+                <!-- Export Excel (Blue) -->
+                <button onclick="exportToExcel()" id="btnExport" disabled class="bg-gray-400 cursor-not-allowed text-white text-xl font-bold py-3 px-8 rounded-full shadow-lg transform transition flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    تصدير إلى Excel
+                </button>
+
+                <!-- Download Source -->
+                <a href="./00.xlsx" download="00.xlsx" class="bg-teal-500 hover:bg-teal-600 text-white text-lg font-bold py-3 px-8 rounded-full shadow-lg transform transition hover:scale-105 flex items-center decoration-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    تحميل الملف الأصلي
+                </a>
+
+                <!-- Reset (Red) -->
+                <button onclick="resetApp()" class="bg-red-500 hover:bg-red-600 text-white text-xl font-bold py-3 px-8 rounded-full shadow-lg transform transition hover:scale-105 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    مسح
+                </button>
+            </div>
+        </div>
+
+        <!-- Results Area -->
+        <div id="resultsArea" class="hidden">
+            <h2 class="text-2xl font-bold text-teal-800 mb-4 border-r-4 border-teal-500 pr-3" id="resultHeader">نتائج البحث</h2>
+            
+            <div class="overflow-x-auto rounded-xl shadow-lg">
+                <table id="reportTable" class="min-w-full bg-white">
+                    <thead class="bg-teal-700 text-white">
+                        <tr>
+                            <th class="py-4 px-6 text-right text-lg font-semibold w-1/4">الاسم</th>
+                            <th class="py-4 px-6 text-right text-lg font-semibold w-3/4">الدورات التدريبية التي تم حضورها</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody" class="divide-y divide-gray-200">
+                        <!-- Rows will be injected here JS -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- No Results Message -->
+            <div id="noResults" class="hidden text-center py-10">
+                <p class="text-xl text-gray-500">لا توجد بيانات متاحة لهذا الاختيار.</p>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-teal-900 text-white text-center py-6 mt-10 shadow-inner">
+        <p class="text-lg font-light tracking-wide">
+            All rights are reserved to Dr. Mazen Badawy – Doctorate of English Teaching & Testing
+        </p>
+    </footer>
+
+    <!-- Application Logic -->
+    <script>
+        // Global Database Object
+        let database = {};
+        let isDataLoaded = false;
+
+        // On Window Load -> Fetch Excel
+        window.onload = async function() {
+            try {
+                const response = await fetch('./00.xlsx');
+                if (!response.ok) {
+                    throw new Error("لم يتم العثور على الملف 00.xlsx");
+                }
+                const arrayBuffer = await response.arrayBuffer();
+                const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+                
+                // Parse Sheets
+                database['هيئة تدريس'] = processSheet(workbook.Sheets['هيئة تدريس']);
+                database['هيئة معاونة'] = processSheet(workbook.Sheets['هيئة معاونة']);
+                database['جهاز اداري'] = processSheet(workbook.Sheets['جهاز اداري']);
+
+                // Update UI
+                isDataLoaded = true;
+                const statusDiv = document.getElementById('dataStatus');
+                statusDiv.innerHTML = `<span class="text-green-600">√ تم تحميل قاعدة البيانات بنجاح</span>`;
+                
+                // Enable Buttons
+                const btnShow = document.getElementById('btnShow');
+                const btnExport = document.getElementById('btnExport');
+                
+                btnShow.disabled = false;
+                btnShow.classList.remove('bg-gray-400', 'cursor-not-allowed');
+                btnShow.classList.add('bg-green-600', 'hover:bg-green-700', 'hover:scale-105');
+                
+                btnExport.disabled = false;
+                btnExport.classList.remove('bg-gray-400', 'cursor-not-allowed');
+                btnExport.classList.add('bg-blue-600', 'hover:bg-blue-700', 'hover:scale-105');
+
+            } catch (error) {
+                console.error(error);
+                const statusDiv = document.getElementById('dataStatus');
+                statusDiv.innerHTML = `<span class="text-red-600">خطأ: تأكد من وجود ملف "00.xlsx" في نفس المجلد. (${error.message})</span>`;
+            }
+        };
+
+        // --- EXCEL PARSING LOGIC ---
+        function processSheet(sheet) {
+            if (!sheet) return [];
+
+            const range = XLSX.utils.decode_range(sheet['!ref']);
+            const data = [];
+            
+            // 1. Find the "Names" Row (Header 2)
+            // We search first 10 rows in Column A (index 0) for "الاسم"
+            let nameRowIndex = -1;
+            for (let R = range.s.r; R <= Math.min(range.e.r, 10); ++R) {
+                const cellAddress = XLSX.utils.encode_cell({r: R, c: range.s.c});
+                const cell = sheet[cellAddress];
+                if (cell && cell.v && cell.v.toString().includes('الاسم')) {
+                    nameRowIndex = R;
+                    break;
+                }
+            }
+
+            if (nameRowIndex === -1) return []; // Structure unknown
+
+            const yearRowIndex = nameRowIndex - 1; // Row above names has years
+            const courseRowIndex = nameRowIndex;   // Same row as "Names" has course titles
+            
+            // 2. Map Columns to Years & Courses
+            const colMap = {}; // index -> {year, course}
+            let currentYear = "";
+
+            // Start from column B (index 1) assuming A is Names
+            for (let C = range.s.c + 1; C <= range.e.c; ++C) {
+                // Check Year (Handles Merged Cells logic simply by carrying over previous value if empty)
+                const yearAddress = XLSX.utils.encode_cell({r: yearRowIndex, c: C});
+                const yearCell = sheet[yearAddress];
+                if (yearCell && yearCell.v) {
+                    currentYear = yearCell.v.toString().trim();
+                }
+                
+                // Check Course Name
+                const courseAddress = XLSX.utils.encode_cell({r: courseRowIndex, c: C});
+                const courseCell = sheet[courseAddress];
+                
+                if (courseCell && courseCell.v) {
+                    colMap[C] = { 
+                        year: currentYear, 
+                        course: courseCell.v.toString().trim() 
+                    };
+                }
+            }
+
+            // 3. Extract Member Data
+            for (let R = nameRowIndex + 1; R <= range.e.r; ++R) {
+                const nameAddress = XLSX.utils.encode_cell({r: R, c: range.s.c});
+                const nameCell = sheet[nameAddress];
+                
+                if (!nameCell || !nameCell.v) continue; // Skip empty rows
+
+                const memberName = nameCell.v.toString().trim();
+                const memberData = { name: memberName, years: {} };
+
+                // Check all columns for this member
+                for (let C = range.s.c + 1; C <= range.e.c; ++C) {
+                    if (!colMap[C]) continue;
+
+                    const cellAddress = XLSX.utils.encode_cell({r: R, c: C});
+                    const cell = sheet[cellAddress];
+                    
+                    // Logic: If cell has content (Checkmark or Text), they attended
+                    const isAttended = cell && cell.v && (
+                        cell.v === '√' || 
+                        cell.v === true || 
+                        cell.v.toString().trim().length > 0
+                    );
+
+                    if (isAttended) {
+                        const { year, course } = colMap[C];
+                        if (!year) continue;
+
+                        if (!memberData.years[year]) {
+                            memberData.years[year] = [];
+                        }
+                        memberData.years[year].push(course);
+                    }
+                }
+                data.push(memberData);
+            }
+            return data;
+        }
+
+        // --- APP FUNCTIONS ---
+
+        function generateReport() {
+            if (!isDataLoaded) {
+                alert("جاري تحميل البيانات، برجاء الانتظار...");
+                return;
+            }
+
+            // 1. Get Values
+            const categorySelect = document.getElementById('categorySelect');
+            const yearSelect = document.getElementById('yearSelect');
+            
+            const selectedCategory = categorySelect.value;
+            const selectedYear = yearSelect.value;
+            
+            // 2. Validation
+            if (!selectedCategory || !selectedYear) {
+                alert("برجاء اختيار الفئة والعام الأكاديمي أولاً.");
+                return;
+            }
+
+            // 3. UI Setup
+            const resultsArea = document.getElementById('resultsArea');
+            const tableBody = document.getElementById('tableBody');
+            const reportTable = document.getElementById('reportTable');
+            const noResults = document.getElementById('noResults');
+            const resultHeader = document.getElementById('resultHeader');
+            
+            // Clear previous results
+            tableBody.innerHTML = '';
+            resultsArea.classList.remove('hidden');
+
+            // Update Header text
+            const categoryText = categorySelect.options[categorySelect.selectedIndex].text;
+            resultHeader.innerText = `نتائج البحث: ${categoryText} - عام ${selectedYear}`;
+
+            // 4. Fetch Data from Parsed DB
+            const categoryData = database[selectedCategory];
+            
+            if (!categoryData) {
+                noResults.classList.remove('hidden');
+                noResults.innerHTML = `<p class="text-red-500">لا توجد بيانات لهذه الفئة في الملف (تحقق من اسم الشيت في ملف Excel).</p>`;
+                reportTable.classList.add('hidden');
+                return;
+            }
+
+            let hasRows = false;
+
+            // 5. Render Logic
+            categoryData.forEach(member => {
+                // Fuzzy match for year (e.g., excel has "2022-2023" vs dropdown "2022-2023")
+                // We access exactly what matches string-wise.
+                // If excel headers are "2022 / 2023", exact match might fail. 
+                // We'll assume strict format from prompt, but log keys for debugging.
+                const courses = member.years[selectedYear];
+
+                if (courses && courses.length > 0) {
+                    hasRows = true;
+                    
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-teal-50 transition-colors duration-200";
+
+                    const coursesHtml = courses.map(course => 
+                        `<span class="inline-block bg-teal-100 text-teal-800 text-sm px-3 py-1 rounded-full m-1 shadow-sm border border-teal-200 font-semibold">${course}</span>`
+                    ).join('');
+
+                    tr.innerHTML = `
+                        <td class="py-4 px-6 border-b border-gray-200 text-gray-800 font-bold text-lg">${member.name}</td>
+                        <td class="py-4 px-6 border-b border-gray-200 text-gray-600">${coursesHtml}</td>
+                    `;
+                    
+                    tableBody.appendChild(tr);
+                }
+            });
+
+            // 6. Handle Empty State
+            if (hasRows) {
+                reportTable.classList.remove('hidden');
+                noResults.classList.add('hidden');
+            } else {
+                reportTable.classList.add('hidden');
+                noResults.classList.remove('hidden');
+                noResults.innerHTML = `<p class="text-xl text-gray-500">لا توجد سجلات تدريبية مسجلة لـ <b>${categoryText}</b> في عام <b>${selectedYear}</b>.</p>`;
+            }
+            
+            // Scroll to results
+            resultsArea.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function resetApp() {
+            document.getElementById('categorySelect').value = "";
+            document.getElementById('yearSelect').value = "";
+            document.getElementById('resultsArea').classList.add('hidden');
+            document.getElementById('tableBody').innerHTML = "";
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function exportToExcel() {
+            const resultsArea = document.getElementById('resultsArea');
+            const tableBody = document.getElementById('tableBody');
+            
+            if (resultsArea.classList.contains('hidden') || tableBody.children.length === 0) {
+                alert("لا توجد بيانات معروضة لتصديرها. برجاء عرض التقرير أولاً.");
+                return;
+            }
+
+            const categorySelect = document.getElementById('categorySelect');
+            const yearSelect = document.getElementById('yearSelect');
+            const categoryText = categorySelect.options[categorySelect.selectedIndex].text;
+            const yearText = yearSelect.value;
+
+            const filename = `Training_Report_${categoryText}_${yearText}.xlsx`;
+
+            const table = document.getElementById('reportTable');
+            const wb = XLSX.utils.table_to_book(table, {sheet: "Sheet1"});
+            XLSX.writeFile(wb, filename);
+        }
+
+    </script>
+</body>
+</html>
