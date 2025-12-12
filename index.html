@@ -517,6 +517,7 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
+        // --- UPDATED EXPORT FUNCTION ---
         function exportToExcel() {
             const resultsArea = document.getElementById('resultsArea');
             const tableBody = document.getElementById('tableBody');
@@ -530,11 +531,48 @@
             const yearSelect = document.getElementById('yearSelect');
             const categoryText = categorySelect.options[categorySelect.selectedIndex].text;
             const yearText = yearSelect.value;
+            const selectedCategory = categorySelect.value;
 
+            // 1. Fetch Data Directly (Don't just parse HTML table)
+            const categoryData = database[selectedCategory];
+            if (!categoryData) return;
+
+            // 2. Build rows array for SheetJS
+            // Format: [ ["Name", "Course 1", "Course 2", ...], [Member, C1, C2, ...] ]
+            const exportRows = [];
+            let maxCourses = 0;
+            const dataRows = [];
+
+            categoryData.forEach(member => {
+                const courses = member.years[yearText];
+                if (courses && courses.length > 0) {
+                    if (courses.length > maxCourses) maxCourses = courses.length;
+                    // Add Row: [Name, ...courses]
+                    dataRows.push([member.name, ...courses]);
+                }
+            });
+
+            // 3. Create Dynamic Headers
+            const headers = ["الاسم"];
+            for (let i = 1; i <= maxCourses; i++) {
+                headers.push(`دورة ${i}`);
+            }
+            exportRows.push(headers);
+            
+            // Add Data
+            exportRows.push(...dataRows);
+
+            // 4. Create Workbook
+            const ws = XLSX.utils.aoa_to_sheet(exportRows);
+            const wb = XLSX.utils.book_new();
+            
+            // Right-to-Left Sheet direction
+            if(!ws['!views']) ws['!views'] = [];
+            ws['!views'].push({ rightToLeft: true });
+
+            XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+            
             const filename = `Training_Report_${categoryText}_${yearText}.xlsx`;
-
-            const table = document.getElementById('reportTable');
-            const wb = XLSX.utils.table_to_book(table, {sheet: "Sheet1"});
             XLSX.writeFile(wb, filename);
         }
 
