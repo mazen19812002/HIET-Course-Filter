@@ -63,6 +63,17 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        
+        .tab-btn.active {
+            background-color: #0f766e; /* teal-700 */
+            color: white;
+            border-color: #0f766e;
+        }
+        .tab-btn {
+            background-color: white;
+            color: #0f766e;
+            border: 2px solid #e5e7eb;
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between">
@@ -91,15 +102,30 @@
         <div class="glass-panel p-6 md:p-8 max-w-5xl mx-auto mb-8">
             
             <!-- File Upload Section -->
-            <div class="mb-8 border-b border-gray-200 pb-6 flex flex-col items-center justify-center">
+            <div class="mb-6 border-b border-gray-200 pb-4 flex flex-col items-center justify-center">
                  <input type="file" id="uploadExcel" accept=".xlsx, .xls" class="hidden" />
-                 <button onclick="document.getElementById('uploadExcel').click()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-lg font-bold py-2 px-6 rounded-full shadow-md transform transition hover:scale-105 flex items-center">
+                 <button onclick="document.getElementById('uploadExcel').click()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-lg font-bold py-2 px-6 rounded-full shadow-md transform transition hover:scale-105 flex items-center mb-2">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                     </svg>
                     رفع ملف Excel يدويًا
                 </button>
-                <p class="text-xs text-gray-500 mt-2">استخدم هذا الزر إذا لم يتم تحميل الملف تلقائياً</p>
+            </div>
+
+            <!-- Mode Selection Tabs -->
+            <div class="flex justify-center mb-6 gap-4">
+                <button onclick="switchMode('year')" id="tabYear" class="tab-btn active px-6 py-2 rounded-full font-bold text-lg transition-all duration-300 shadow-sm flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    بحث بالعام الدراسي
+                </button>
+                <button onclick="switchMode('member')" id="tabMember" class="tab-btn px-6 py-2 rounded-full font-bold text-lg transition-all duration-300 shadow-sm flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    بحث بالعضو (تقرير فردي)
+                </button>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
@@ -108,7 +134,7 @@
                 <div class="flex flex-col">
                     <label for="categorySelect" class="text-teal-900 font-bold mb-2 text-lg">اختر الفئة:</label>
                     <div class="relative">
-                        <select id="categorySelect" class="w-full p-3 border-2 border-teal-100 rounded-xl text-lg focus:outline-none focus:border-teal-500 bg-white appearance-none cursor-pointer text-gray-700 shadow-sm transition-all hover:border-teal-300">
+                        <select id="categorySelect" onchange="handleCategoryChange()" class="w-full p-3 border-2 border-teal-100 rounded-xl text-lg focus:outline-none focus:border-teal-500 bg-white appearance-none cursor-pointer text-gray-700 shadow-sm transition-all hover:border-teal-300">
                             <option value="" disabled selected>-- حدد الفئة --</option>
                             <option value="هيئة تدريس">هيئة تدريس</option>
                             <option value="هيئة معاونة">هيئة معاونة</option>
@@ -120,8 +146,8 @@
                     </div>
                 </div>
 
-                <!-- Year Select -->
-                <div class="flex flex-col">
+                <!-- Year Select (Visible in Year Mode) -->
+                <div id="yearInputGroup" class="flex flex-col">
                     <label for="yearSelect" class="text-teal-900 font-bold mb-2 text-lg">اختر العام الأكاديمي:</label>
                     <div class="relative">
                         <select id="yearSelect" class="w-full p-3 border-2 border-teal-100 rounded-xl text-lg focus:outline-none focus:border-teal-500 bg-white appearance-none cursor-pointer text-gray-700 shadow-sm transition-all hover:border-teal-300">
@@ -136,11 +162,25 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Name Select (Visible in Member Mode) -->
+                <div id="nameInputGroup" class="flex flex-col hidden">
+                    <label for="nameSelect" class="text-teal-900 font-bold mb-2 text-lg">اختر اسم العضو:</label>
+                    <div class="relative">
+                        <select id="nameSelect" class="w-full p-3 border-2 border-teal-100 rounded-xl text-lg focus:outline-none focus:border-teal-500 bg-white appearance-none cursor-pointer text-gray-700 shadow-sm transition-all hover:border-teal-300">
+                            <option value="" disabled selected>-- حدد الاسم --</option>
+                            <!-- Populated dynamically -->
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center px-4 text-teal-600">
+                            <svg class="fill-current h-6 w-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Action Buttons -->
             <div class="flex flex-wrap justify-center gap-4">
-                <!-- Show Report (Modified to Blue) -->
+                <!-- Show Report (Blue) -->
                 <button onclick="generateReport()" id="btnShow" disabled class="bg-blue-600 cursor-not-allowed hover:bg-blue-700 disabled:bg-gray-400 text-white text-xl font-bold py-3 px-6 rounded-full shadow-lg transform transition flex items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -181,9 +221,8 @@
             <div class="overflow-x-auto rounded-xl shadow-lg bg-white">
                 <table id="reportTable" class="min-w-full bg-white">
                     <thead class="bg-teal-700 text-white">
-                        <tr>
-                            <th class="py-4 px-6 text-right text-lg font-semibold w-1/4 whitespace-nowrap">الاسم</th>
-                            <th class="py-4 px-6 text-right text-lg font-semibold w-3/4">الدورات التدريبية</th>
+                        <tr id="tableHeaderRow">
+                            <!-- Headers dynamically set by JS -->
                         </tr>
                     </thead>
                     <tbody id="tableBody" class="divide-y divide-gray-200">
@@ -209,9 +248,10 @@
 
     <!-- Application Logic -->
     <script>
-        // Global Database Object
+        // Global State
         let database = {};
         let isDataLoaded = false;
+        let currentMode = 'year'; // 'year' or 'member'
 
         // --- 1. Automatic Load on Window Start ---
         window.onload = async function() {
@@ -251,7 +291,62 @@
             reader.readAsArrayBuffer(file);
         });
 
-        // --- 3. Core Processing Logic ---
+        // --- 3. Mode Switching Logic ---
+        function switchMode(mode) {
+            currentMode = mode;
+            
+            // UI Toggles
+            const btnYear = document.getElementById('tabYear');
+            const btnMember = document.getElementById('tabMember');
+            const groupYear = document.getElementById('yearInputGroup');
+            const groupName = document.getElementById('nameInputGroup');
+            const resultsArea = document.getElementById('resultsArea');
+
+            // Reset UI
+            resultsArea.classList.add('hidden');
+            document.getElementById('categorySelect').value = "";
+            document.getElementById('yearSelect').value = "";
+            document.getElementById('nameSelect').innerHTML = '<option value="" disabled selected>-- حدد الاسم --</option>';
+
+            if (mode === 'year') {
+                btnYear.classList.add('active');
+                btnMember.classList.remove('active');
+                groupYear.classList.remove('hidden');
+                groupName.classList.add('hidden');
+            } else {
+                btnMember.classList.add('active');
+                btnYear.classList.remove('active');
+                groupYear.classList.add('hidden');
+                groupName.classList.remove('hidden');
+            }
+        }
+
+        // --- 4. Populate Names for Member Mode ---
+        function handleCategoryChange() {
+            if (currentMode !== 'member') return;
+
+            const category = document.getElementById('categorySelect').value;
+            const nameSelect = document.getElementById('nameSelect');
+            
+            // Clear current options
+            nameSelect.innerHTML = '<option value="" disabled selected>-- حدد الاسم --</option>';
+            
+            if (!database[category]) return;
+
+            // Sort names alphabetically
+            const members = database[category].slice().sort((a, b) => a.name.localeCompare(b.name, 'ar'));
+
+            members.forEach((member, index) => {
+                const option = document.createElement('option');
+                option.value = index; // Store index to retrieve object easily later, or use name string
+                option.text = member.name;
+                // Store actual name as value for robust finding later
+                option.value = member.name; 
+                nameSelect.appendChild(option);
+            });
+        }
+
+        // --- 5. Core Processing Logic ---
         function processWorkbook(workbook) {
             try {
                 // Parse all sheets
@@ -271,11 +366,9 @@
                     const btn = document.getElementById(btnId);
                     if(btn) {
                         btn.disabled = false;
-                        // Remove gray/disabled classes, Add color classes based on button type is handled in HTML class list mostly, 
-                        // but we need to remove the disabled overrides.
                         btn.classList.remove('bg-gray-400', 'cursor-not-allowed', 'disabled:bg-gray-400');
                         
-                        // Re-add specific colors if they were removed (simple safeguard)
+                        // Re-add specific colors
                         if(btnId === 'btnShow' || btnId === 'btnExport') btn.classList.add('bg-blue-600', 'hover:bg-blue-700');
                         if(btnId === 'btnCopy') btn.classList.add('bg-purple-600', 'hover:bg-purple-700');
                     }
@@ -287,18 +380,17 @@
             }
         }
 
-        // --- EXCEL PARSING LOGIC (SMART YEAR DETECTION) ---
+        // --- EXCEL PARSING LOGIC ---
         function processSheet(sheet) {
             if (!sheet) return [];
 
             const range = XLSX.utils.decode_range(sheet['!ref']);
             const data = [];
             
-            // 1. Find the "Names" Cell (The anchor point)
+            // 1. Find "Name" Cell
             let nameRowIndex = -1;
             let nameColIndex = -1;
             
-            // Search first 20 rows and 5 columns for "الاسم"
             for (let R = range.s.r; R <= Math.min(range.e.r, 20); ++R) {
                 for (let C = range.s.c; C <= Math.min(range.e.c, 5); ++C) {
                     const cellAddress = XLSX.utils.encode_cell({r: R, c: C});
@@ -312,24 +404,21 @@
                 if (nameRowIndex !== -1) break;
             }
 
-            if (nameRowIndex === -1) return []; // Cannot parse this sheet
+            if (nameRowIndex === -1) return [];
 
-            // 2. Heuristic to find Course Row:
+            // 2. Course Row Heuristic
             let courseRowIndex = nameRowIndex;
             const immediateRightCell = sheet[XLSX.utils.encode_cell({r: nameRowIndex, c: nameColIndex + 1})];
             const belowRightCell = sheet[XLSX.utils.encode_cell({r: nameRowIndex + 1, c: nameColIndex + 1})];
             
-            // If the cell next to Name is empty, but the one below has text, courses are likely on the next row
             if ((!immediateRightCell || !immediateRightCell.v) && (belowRightCell && belowRightCell.v)) {
                 courseRowIndex = nameRowIndex + 1;
             }
 
-            // 3. Map Columns to {Year, Course}
-            // SMART YEAR SEARCH: Scan multiple rows above Name to find where years are
+            // 3. Map Columns
             const colMap = {}; 
             let currentYear = "";
 
-            // Helper to clean year string (e.g., "2025 / 2026" -> "2025-2026")
             function normalizeYear(val) {
                 if (!val) return "";
                 let str = val.toString().trim();
@@ -343,8 +432,6 @@
 
             for (let C = nameColIndex + 1; C <= range.e.c; ++C) {
                 let foundYearInColumn = "";
-                
-                // Check 3 rows above nameRowIndex
                 for (let rOffset = 0; rOffset <= 3; rOffset++) {
                     const potentialYearRow = nameRowIndex - rOffset;
                     if (potentialYearRow < range.s.r) continue;
@@ -359,33 +446,26 @@
                         }
                     }
                 }
-
-                if (foundYearInColumn) {
-                    currentYear = foundYearInColumn;
-                }
+                if (foundYearInColumn) currentYear = foundYearInColumn;
                 
-                // Read Course Name
                 const courseAddress = XLSX.utils.encode_cell({r: courseRowIndex, c: C});
                 const courseCell = sheet[courseAddress];
                 
                 if (courseCell && courseCell.v) {
                     if (currentYear) {
-                        colMap[C] = { 
-                            year: currentYear, 
-                            course: courseCell.v.toString().trim()
-                        };
+                        colMap[C] = { year: currentYear, course: courseCell.v.toString().trim() };
                     }
                 }
             }
 
-            // 4. Extract Member Data
+            // 4. Extract Data
             const startDataRow = courseRowIndex + 1;
             
             for (let R = startDataRow; R <= range.e.r; ++R) {
                 const nameAddress = XLSX.utils.encode_cell({r: R, c: nameColIndex});
                 const nameCell = sheet[nameAddress];
                 
-                if (!nameCell || !nameCell.v) continue; // Skip empty rows
+                if (!nameCell || !nameCell.v) continue;
 
                 const memberName = nameCell.v.toString().trim();
                 if (memberName.length < 2) continue; 
@@ -421,190 +501,243 @@
 
         function generateReport() {
             if (!isDataLoaded) {
-                alert("جاري تحميل البيانات، برجاء الانتظار أو رفع الملف يدويًا...");
-                return;
-            }
-
-            const categorySelect = document.getElementById('categorySelect');
-            const yearSelect = document.getElementById('yearSelect');
-            
-            const selectedCategory = categorySelect.value;
-            const selectedYear = yearSelect.value; 
-            
-            if (!selectedCategory || !selectedYear) {
-                alert("برجاء اختيار الفئة والعام الأكاديمي أولاً.");
+                alert("جاري تحميل البيانات...");
                 return;
             }
 
             const resultsArea = document.getElementById('resultsArea');
             const tableBody = document.getElementById('tableBody');
+            const tableHeaderRow = document.getElementById('tableHeaderRow');
             const reportTable = document.getElementById('reportTable');
             const noResults = document.getElementById('noResults');
             const resultHeader = document.getElementById('resultHeader');
             
-            tableBody.innerHTML = '';
-            resultsArea.classList.remove('hidden');
+            // Validation & Setup based on Mode
+            const categorySelect = document.getElementById('categorySelect');
+            const category = categorySelect.value;
 
-            const categoryText = categorySelect.options[categorySelect.selectedIndex].text;
-            resultHeader.innerText = `نتائج البحث: ${categoryText} - عام ${selectedYear}`;
-
-            const categoryData = database[selectedCategory];
-            
-            if (!categoryData || categoryData.length === 0) {
-                noResults.classList.remove('hidden');
-                noResults.innerHTML = `<p class="text-red-500">لا توجد بيانات لهذه الفئة في الملف.</p>`;
-                reportTable.classList.add('hidden');
-                resultsArea.scrollIntoView({ behavior: 'smooth' });
+            if (!category) {
+                alert("برجاء اختيار الفئة أولاً.");
                 return;
             }
 
-            let hasRows = false;
+            tableBody.innerHTML = '';
+            tableHeaderRow.innerHTML = '';
+            resultsArea.classList.remove('hidden');
 
-            categoryData.forEach(member => {
-                const courses = member.years[selectedYear];
+            if (currentMode === 'year') {
+                // --- YEAR REPORT MODE ---
+                const year = document.getElementById('yearSelect').value;
+                if (!year) { alert("برجاء اختيار العام."); return; }
 
-                if (courses && courses.length > 0) {
-                    hasRows = true;
-                    
-                    const tr = document.createElement('tr');
-                    tr.className = "hover:bg-teal-50 transition-colors duration-200";
+                const categoryText = categorySelect.options[categorySelect.selectedIndex].text;
+                resultHeader.innerText = `نتائج البحث: ${categoryText} - عام ${year}`;
+                
+                // Set Headers
+                tableHeaderRow.innerHTML = `
+                    <th class="py-4 px-6 text-right text-lg font-semibold w-1/4 whitespace-nowrap">الاسم</th>
+                    <th class="py-4 px-6 text-right text-lg font-semibold w-3/4">الدورات التدريبية</th>
+                `;
 
-                    const coursesHtml = courses.map(course => 
-                        `<span class="inline-block bg-teal-100 text-teal-800 text-sm px-3 py-1 rounded-full m-1 shadow-sm border border-teal-200 font-semibold">${course}</span>`
-                    ).join('');
+                const categoryData = database[category] || [];
+                let hasRows = false;
 
-                    tr.innerHTML = `
-                        <td class="py-4 px-6 border-b border-gray-200 text-gray-800 font-bold text-lg whitespace-nowrap">${member.name}</td>
-                        <td class="py-4 px-6 border-b border-gray-200 text-gray-600 leading-relaxed">${coursesHtml}</td>
-                    `;
-                    
-                    tableBody.appendChild(tr);
-                }
-            });
+                categoryData.forEach(member => {
+                    const courses = member.years[year];
+                    if (courses && courses.length > 0) {
+                        hasRows = true;
+                        const tr = document.createElement('tr');
+                        tr.className = "hover:bg-teal-50 transition-colors duration-200";
+                        const coursesHtml = courses.map(course => 
+                            `<span class="inline-block bg-teal-100 text-teal-800 text-sm px-3 py-1 rounded-full m-1 shadow-sm border border-teal-200 font-semibold">${course}</span>`
+                        ).join('');
+                        tr.innerHTML = `
+                            <td class="py-4 px-6 border-b border-gray-200 text-gray-800 font-bold text-lg whitespace-nowrap">${member.name}</td>
+                            <td class="py-4 px-6 border-b border-gray-200 text-gray-600 leading-relaxed">${coursesHtml}</td>
+                        `;
+                        tableBody.appendChild(tr);
+                    }
+                });
 
-            if (hasRows) {
-                reportTable.classList.remove('hidden');
-                noResults.classList.add('hidden');
+                updateVisibility(hasRows, reportTable, noResults);
+
             } else {
-                reportTable.classList.add('hidden');
-                noResults.classList.remove('hidden');
-                noResults.innerHTML = `<p class="text-xl text-gray-500">لا توجد سجلات تدريبية مسجلة لـ <b>${categoryText}</b> في عام <b>${selectedYear}</b>.</p>`;
+                // --- MEMBER REPORT MODE ---
+                const memberName = document.getElementById('nameSelect').value;
+                if (!memberName) { alert("برجاء اختيار اسم العضو."); return; }
+
+                resultHeader.innerText = `السجل التدريبي للعضو: ${memberName}`;
+
+                // Set Headers
+                tableHeaderRow.innerHTML = `
+                    <th class="py-4 px-6 text-right text-lg font-semibold w-1/4 whitespace-nowrap">العام الأكاديمي</th>
+                    <th class="py-4 px-6 text-right text-lg font-semibold w-3/4">الدورات التدريبية</th>
+                `;
+
+                const categoryData = database[category] || [];
+                const member = categoryData.find(m => m.name === memberName);
+
+                if (member) {
+                    // Sort years
+                    const years = Object.keys(member.years).sort();
+                    
+                    if (years.length > 0) {
+                        years.forEach(year => {
+                            const courses = member.years[year];
+                            const tr = document.createElement('tr');
+                            tr.className = "hover:bg-teal-50 transition-colors duration-200";
+                            const coursesHtml = courses.map(course => 
+                                `<span class="inline-block bg-teal-100 text-teal-800 text-sm px-3 py-1 rounded-full m-1 shadow-sm border border-teal-200 font-semibold">${course}</span>`
+                            ).join('');
+                            tr.innerHTML = `
+                                <td class="py-4 px-6 border-b border-gray-200 text-gray-800 font-bold text-lg whitespace-nowrap">${year}</td>
+                                <td class="py-4 px-6 border-b border-gray-200 text-gray-600 leading-relaxed">${coursesHtml}</td>
+                            `;
+                            tableBody.appendChild(tr);
+                        });
+                        updateVisibility(true, reportTable, noResults);
+                    } else {
+                        updateVisibility(false, reportTable, noResults);
+                    }
+                } else {
+                    updateVisibility(false, reportTable, noResults);
+                }
             }
             
             resultsArea.scrollIntoView({ behavior: 'smooth' });
         }
 
+        function updateVisibility(hasRows, table, noMsg) {
+            if (hasRows) {
+                table.classList.remove('hidden');
+                noMsg.classList.add('hidden');
+            } else {
+                table.classList.add('hidden');
+                noMsg.classList.remove('hidden');
+                noMsg.innerHTML = `<p class="text-xl text-gray-500">لا توجد سجلات متاحة.</p>`;
+            }
+        }
+
         function resetApp() {
             document.getElementById('categorySelect').value = "";
             document.getElementById('yearSelect').value = "";
+            document.getElementById('nameSelect').innerHTML = '<option value="" disabled selected>-- حدد الاسم --</option>';
             document.getElementById('resultsArea').classList.add('hidden');
             document.getElementById('tableBody').innerHTML = "";
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // --- EXPORT TO EXCEL (SEPARATE COLUMNS) ---
+        // --- DYNAMIC EXPORT FUNCTION ---
         function exportToExcel() {
             const resultsArea = document.getElementById('resultsArea');
-            const tableBody = document.getElementById('tableBody');
-            
-            if (resultsArea.classList.contains('hidden') || tableBody.children.length === 0) {
-                alert("لا توجد بيانات معروضة لتصديرها. برجاء عرض التقرير أولاً.");
-                return;
-            }
+            if (resultsArea.classList.contains('hidden')) { alert("لا توجد بيانات."); return; }
 
-            const categorySelect = document.getElementById('categorySelect');
-            const yearSelect = document.getElementById('yearSelect');
-            const categoryText = categorySelect.options[categorySelect.selectedIndex].text;
-            const yearText = yearSelect.value;
-            const selectedCategory = categorySelect.value;
-
-            const categoryData = database[selectedCategory];
+            const category = document.getElementById('categorySelect').value;
+            const categoryData = database[category];
             if (!categoryData) return;
 
-            // Prepare Data: Separating courses into distinct columns
             const exportRows = [];
             const dataRows = [];
             let maxCourses = 0;
+            let filename = "";
 
-            categoryData.forEach(member => {
-                const courses = member.years[yearText];
-                if (courses && courses.length > 0) {
-                    if (courses.length > maxCourses) maxCourses = courses.length;
-                    // Spread course array elements into separate cells
-                    dataRows.push([member.name, ...courses]);
+            if (currentMode === 'year') {
+                const year = document.getElementById('yearSelect').value;
+                filename = `Training_Report_${category}_${year}.xlsx`;
+
+                categoryData.forEach(member => {
+                    const courses = member.years[year];
+                    if (courses && courses.length > 0) {
+                        if (courses.length > maxCourses) maxCourses = courses.length;
+                        dataRows.push([member.name, ...courses]);
+                    }
+                });
+                
+                const headers = ["الاسم"];
+                for (let i = 1; i <= maxCourses; i++) headers.push(`دورة ${i}`);
+                exportRows.push(headers);
+
+            } else {
+                const memberName = document.getElementById('nameSelect').value;
+                filename = `Member_History_${memberName}.xlsx`;
+                
+                const member = categoryData.find(m => m.name === memberName);
+                if (member) {
+                     const years = Object.keys(member.years).sort();
+                     years.forEach(year => {
+                        const courses = member.years[year];
+                        if (courses.length > maxCourses) maxCourses = courses.length;
+                        dataRows.push([year, ...courses]);
+                     });
                 }
-            });
-
-            // Create Dynamic Headers based on max number of courses found
-            const headers = ["الاسم"];
-            for (let i = 1; i <= maxCourses; i++) {
-                headers.push(`دورة ${i}`);
+                
+                const headers = ["العام الأكاديمي"];
+                for (let i = 1; i <= maxCourses; i++) headers.push(`دورة ${i}`);
+                exportRows.push(headers);
             }
-            exportRows.push(headers);
-            
-            // Append the actual data rows
+
             exportRows.push(...dataRows);
 
             const ws = XLSX.utils.aoa_to_sheet(exportRows);
             const wb = XLSX.utils.book_new();
-            
-            // RTL
             if(!ws['!views']) ws['!views'] = [];
             ws['!views'].push({ rightToLeft: true });
-
             XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
-            
-            const filename = `Training_Report_${categoryText}_${yearText}.xlsx`;
             XLSX.writeFile(wb, filename);
         }
 
-        // --- COPY TABLE FUNCTION (SPLIT COLUMNS) ---
+        // --- DYNAMIC COPY FUNCTION ---
         function copyTable() {
             const resultsArea = document.getElementById('resultsArea');
-            
-            if (resultsArea.classList.contains('hidden')) {
-                alert("لا توجد بيانات معروضة لنسخها. برجاء عرض التقرير أولاً.");
-                return;
-            }
+            if (resultsArea.classList.contains('hidden')) { alert("لا توجد بيانات."); return; }
 
-            const categorySelect = document.getElementById('categorySelect');
-            const yearSelect = document.getElementById('yearSelect');
-            const selectedCategory = categorySelect.value;
-            const yearText = yearSelect.value;
-
-            const categoryData = database[selectedCategory];
+            const category = document.getElementById('categorySelect').value;
+            const categoryData = database[category];
             if (!categoryData) return;
 
-            // 1. Calculate Max Columns
+            // Prepare Data for Hidden Table
             let maxCourses = 0;
             const rowsToCopy = [];
+            let col1Title = "";
 
-            categoryData.forEach(member => {
-                const courses = member.years[yearText];
-                if (courses && courses.length > 0) {
-                    if (courses.length > maxCourses) maxCourses = courses.length;
-                    rowsToCopy.push({name: member.name, courses: courses});
+            if (currentMode === 'year') {
+                const year = document.getElementById('yearSelect').value;
+                col1Title = "الاسم";
+                categoryData.forEach(member => {
+                    const courses = member.years[year];
+                    if (courses && courses.length > 0) {
+                        if (courses.length > maxCourses) maxCourses = courses.length;
+                        rowsToCopy.push({col1: member.name, courses: courses});
+                    }
+                });
+            } else {
+                const memberName = document.getElementById('nameSelect').value;
+                col1Title = "العام الأكاديمي";
+                const member = categoryData.find(m => m.name === memberName);
+                if (member) {
+                     const years = Object.keys(member.years).sort();
+                     years.forEach(year => {
+                        const courses = member.years[year];
+                        if (courses.length > maxCourses) maxCourses = courses.length;
+                        rowsToCopy.push({col1: year, courses: courses});
+                     });
                 }
-            });
-
-            if (rowsToCopy.length === 0) {
-                alert("الجدول فارغ");
-                return;
             }
 
-            // 2. Create Temporary Hidden Table
+            if (rowsToCopy.length === 0) { alert("الجدول فارغ"); return; }
+
+            // Create Hidden Table
             const tempTable = document.createElement('table');
             tempTable.style.position = 'fixed';
             tempTable.style.left = '-9999px';
-            tempTable.style.border = '1px solid black'; // Helps some copiers preserve grid
+            tempTable.style.border = '1px solid black';
             
-            // 2a. Header Row
             const thead = document.createElement('thead');
             const trHead = document.createElement('tr');
             
-            const thName = document.createElement('th');
-            thName.innerText = "الاسم";
-            trHead.appendChild(thName);
+            const th1 = document.createElement('th');
+            th1.innerText = col1Title;
+            trHead.appendChild(th1);
 
             for (let i = 1; i <= maxCourses; i++) {
                 const th = document.createElement('th');
@@ -614,34 +747,24 @@
             thead.appendChild(trHead);
             tempTable.appendChild(thead);
 
-            // 2b. Body Rows
             const tbody = document.createElement('tbody');
             rowsToCopy.forEach(row => {
                 const tr = document.createElement('tr');
-                
-                // Name Cell
-                const tdName = document.createElement('td');
-                tdName.innerText = row.name;
-                tr.appendChild(tdName);
+                const td1 = document.createElement('td');
+                td1.innerText = row.col1;
+                tr.appendChild(td1);
 
-                // Course Cells
                 for (let i = 0; i < maxCourses; i++) {
                     const td = document.createElement('td');
-                    // If course exists at index i, put it. Else empty.
-                    if (i < row.courses.length) {
-                        td.innerText = row.courses[i];
-                    } else {
-                        td.innerText = "";
-                    }
+                    td.innerText = (i < row.courses.length) ? row.courses[i] : "";
                     tr.appendChild(td);
                 }
                 tbody.appendChild(tr);
             });
             tempTable.appendChild(tbody);
-
             document.body.appendChild(tempTable);
 
-            // 3. Select and Copy
+            // Copy
             const range = document.createRange();
             range.selectNode(tempTable);
             window.getSelection().removeAllRanges();
@@ -655,7 +778,6 @@
                 alert("فشل النسخ.");
             }
 
-            // 4. Clean up
             window.getSelection().removeAllRanges();
             document.body.removeChild(tempTable);
         }
